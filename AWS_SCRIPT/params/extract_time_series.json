@@ -1,0 +1,26 @@
+{
+    // List of LSI station to extract
+    "LSI": [10050035, 10050038, 13122388, 13122402],
+    // List of REMA station to extract
+    "REMA": [301, 303],
+    // Time scale to extract
+    // 10 minutes data: "10min"
+    // hourly data: "1hr"
+    // daily data: "1day"
+    // dekadal data: "10day"
+    "Tstep": "1day",
+    // Start date in the format,
+    // for 10 minute  "YYYYMMDDHHMM" ; minutes: 00, 10, 20, 30, 40, 50
+    // for hourly "YYYYMMDDHH"
+    // for daily "YYYYMMDD"
+    // for dekad "YYYYMMD" ; dekad: 1, 2, 3
+    "start": "20170901",
+    // End date
+    "end": "20180120",
+    // Variable to extract
+    // Rainfall: "RR"
+    // Temperature min: "TN"
+    // Temperature mean: "TM"
+    // Temperature max: "TX"    
+    "var": "RR"
+}

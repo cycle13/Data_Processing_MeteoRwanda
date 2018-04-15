@@ -1,0 +1,26 @@
+{
+    // Time scale to plot
+    // 10 minutes data: "10min"
+    // hourly data: "1hr"
+    // daily data: "1day"
+    // dekadal data: "10day"
+    "Tstep": "1day",
+    // Start date in the format,
+    // for 10 minute  "YYYYMMDDHHMM" ; minutes: 00, 10, 20, 30, 40, 50
+    // for hourly "YYYYMMDDHH"
+    // for daily "YYYYMMDD"
+    // for dekad "YYYYMMD" ; dekad: 1, 2, 3
+    "date": "20170901",
+    // Variable to plot
+    // Rainfall: "RR"
+    // Temperature min: "TN"
+    // Temperature mean: "TM"
+    // Temperature max: "TX"    
+    "var": "TX",
+    // shapefile for administrative delimitation
+    // Country: 0
+    // Province: 1
+    // District: 2
+    // Sector: 3
+    "shp": 1
+}
