@@ -6,9 +6,50 @@ getLSIAWS.STN <- function(aws, OUTDIR, ftp){
 	listFile <- getURL(paste0(ftp$AWS$LSI$ftp, aws, "/"), curl = curl)
 	rm(curl); gc()
 	listFile <- unlist(strsplit(listFile, "\r?\n"))
-	listFile <- listFile[grepl(".Elab.txt", listFile) & nchar(listFile) == 35]
-	if(length(listFile) == 0) return(NULL)
-	wdaty <- strptime(substr(listFile, 5, 18), "%Y%m%d%H%M%S", tz = "Africa/Kigali")
+
+	iold <- grep("Data[[:digit:]]+.Elab.txt", listFile)
+	inew0 <- grep("Data_%FN%_[[:digit:]]+.Elab.txt", listFile)
+	inew1 <- grep("Data_[[:digit:]]+__[[:digit:]]+.Elab.txt", listFile)
+	inew2 <- grep("Data_[[:digit:]]+_[[:digit:]]+_[[:digit:]]+.Elab.txt", listFile)
+	inew3 <- grep("Data_[[:digit:]]+_[[:digit:]]+.Elab.txt", listFile)
+
+	listF1 <- listFile[iold]
+	listF2 <- listFile[inew0]
+	listF3 <- listFile[inew1]
+	listF4 <- listFile[inew2]
+	listF5 <- listFile[inew3]
+	if(length(listF1) == 0 & length(listF2) == 0 &
+		length(listF3) == 0 & length(listF4) == 0 & length(listF5) == 0)
+	{
+		cat(paste(aws, ": No valid filename format found\n"))
+		return(NULL)
+	}
+
+	wdaty1 <- if(length(listF1) == 0) NULL else
+		strptime(substr(listF1, 5, 18), "%Y%m%d%H%M%S", tz = "Africa/Kigali")
+	wdaty2 <- if(length(listF2) == 0) NULL else
+		strptime(paste0(substr(listF2, 11, 18), "_000001"), "%Y%m%d_%H%M%S", tz = "Africa/Kigali")
+	wdaty3 <- if(length(listF3) == 0) NULL else
+		strptime(paste0(substr(listF3, 16, 23), "_000001"), "%Y%m%d_%H%M%S", tz = "Africa/Kigali")
+	wdaty4 <- if(length(listF4) == 0) NULL else
+		strptime(substr(listF4, 15, 29), "%Y%m%d_%H%M%S", tz = "Africa/Kigali")
+	wdaty5 <- if(length(listF5) == 0) NULL else
+		strptime(paste0(substr(listF5, 15, 22), "_000001"), "%Y%m%d_%H%M%S", tz = "Africa/Kigali")
+
+	wdaty <- list(wdaty1, wdaty2, wdaty3, wdaty4, wdaty5)
+	inull <- sapply(wdaty, is.null)
+	wdaty <- wdaty[!inull]
+	wdaty <- if(length(wdaty) > 1) do.call(c, wdaty) else wdaty[[1]]
+	listFile <- c(listF1, listF2, listF3, listF4, listF5)
+	ina <- !is.na(wdaty)
+	wdaty <- wdaty[ina]
+	listFile <- listFile[ina]
+	if(length(listFile) == 0)
+	{
+		cat(paste(aws, ": No valid filename format found\n"))
+		return(NULL)
+	}
+
 	oo <- order(wdaty)
 	wdaty <- wdaty[oo]
 	listFile <- listFile[oo]
@@ -23,36 +64,72 @@ getLSIAWS.STN <- function(aws, OUTDIR, ftp){
 	}
 
 	donne <- lapply(listFile, function(ff){
-		cat(ff, '\n')
+		cat(paste(aws, ": Downloading >", ff), '\n')
 		tmpfile <- file.path(tmpdir, ff)
 		on.exit(unlink(tmpfile))
 		file0 <- paste0(ftp$AWS$LSI$ftp, aws, "/", ff)
 		ret <- try(getFTPData(file0, tmpfile, userpwd = ftp$AWS$LSI$userpwd), silent = TRUE)
 
-		if(inherits(ret, "try-error")) return(NULL)
-		if(ret != 0) return(NULL)
+		if(inherits(ret, "try-error")){
+			cat(paste(aws, ": Unable to get >", ff, "< from the FTP server\n"))
+			return(NULL)
+		}
+		if(ret != 0){
+			cat(paste(aws, ": Unable to get >", ff, "< from the FTP server\n"))
+			return(NULL)
+		}
 		don <- try(readLines(tmpfile), silent = TRUE)
-		if(inherits(don, "try-error")) return(NULL)
+		if(inherits(don, "try-error")){
+			cat(paste(aws, ": Unable to read >", ff, "\n"))
+			return(NULL)
+		}
 
 		xhead <- don[1:2]
 		h1 <- strsplit(xhead[1], "\t")
 		h2 <- strsplit(xhead[2], "\t")
 		xhead <- c(h1, h2)
 		don <- don[-(1:3)]
+		don <- str_trim(don)
 		don <- don[don != ""]
 		don <- try(do.call(rbind, lapply(seq_along(don), function(i) unlist(strsplit(don[i], "\t")))), silent = TRUE)
-		if(inherits(don, "try-error")) return(NULL)
-		list(head = xhead, data = don)
+		if(inherits(don, "try-error")){
+			cat(paste(aws, ": Unable to parse data >", ff, "\n"))
+			return(NULL)
+		}
+		if(ncol(don) == 1){ 
+			cat(paste(aws, ": Unknown data delimiters >", ff), "\n")
+			return(NULL)
+		}
+
+		daty1 <- strptime(don[, 1], "%d/%m/%Y %I:%M:%S %p", tz = "Africa/Kigali")
+		daty2 <- strptime(don[, 1], "%d/%m/%Y %H.%M.%S", tz = "Africa/Kigali")
+		if(all(is.na(daty1)) & all(is.na(daty2))){
+			cat(paste(aws, ": Unknown date format >", ff), "\n")
+			return(NULL)
+		}
+		daty <- if(all(is.na(daty1))) daty2 else daty1
+		don[, 1] <- format(daty, "%d/%m/%Y %I:%M:%S %p", tz = "Africa/Kigali")
+
+		list(head = xhead, data = don, date = daty)
 	})
+
+	# donne0 <- donne
 	inull <- sapply(donne, is.null)
 	donne <- donne[!inull]
-	if(length(donne) == 0) return(NULL)
+	if(length(donne) == 0){
+		cat(paste(aws, ": All files are considered invalid\n"))
+		return(NULL)
+	}
 	xhead <- donne[[1]]$head
+	daty <- do.call(c, lapply(donne, '[[', 'date'))
 	donne <- do.call(rbind, lapply(donne, '[[', 'data'))
-	donne <- donne[!duplicated(donne[, 1], fromLast =TRUE), ]
+	ix <- order(daty)
+	daty <- daty[ix]
+	donne <- donne[ix, , drop = FALSE]
+	daty <- format(daty, "%d/%m/%Y %I:%M:%S %p", tz = "Africa/Kigali")
+	donne <- donne[!duplicated(daty, fromLast =TRUE), , drop = FALSE]
 	list(head = xhead, data = donne)
 }
-
 
 getLSIAWS.AllVariables <- function(entete){
 	params <- lapply(entete, function(x){
@@ -110,7 +187,10 @@ getLSIAWS.AllVariables <- function(entete){
 
 getLSIAWS.10minData <- function(aws, don10min, OUTDIR){
 	params <- getLSIAWS.AllVariables(list(don10min$head))[[1]]
-	if(is.null(params)) return(NULL)
+	if(is.null(params)){
+		cat(paste(aws, ": It seems that your header is messed up!\n"))
+		return(NULL)
+	}
 	don <- don10min$data
 	don[don == "-999990.00" | don == "-999999.00"] <- NA
 	dates <- strptime(don[, 1], "%d/%m/%Y %I:%M:%S %p", tz = "Africa/Kigali")
@@ -119,7 +199,8 @@ getLSIAWS.10minData <- function(aws, don10min, OUTDIR){
 	dates <- dates[nadates]
 	don <- don[nadates, , drop = FALSE]
 
-	validdates <- dates <= strptime(format(Sys.time(), "%Y%m%d%H%M%S"), "%Y%m%d%H%M%S", tz = "Africa/Kigali")
+	time.now <- format(Sys.time(), "%Y%m%d%H%M%S", tz = "Africa/Kigali")
+	validdates <- dates <= strptime(time.now, "%Y%m%d%H%M%S", tz = "Africa/Kigali")
 	dates <- dates[validdates]
 	don <- don[validdates, , drop = FALSE]
 
@@ -168,7 +249,7 @@ getLSIAWS.10minData <- function(aws, don10min, OUTDIR){
 	}
 	if(length(outdata) == 0) outdata <- NULL
 
-	daty <- format(dates, "%Y%m%d%H%M%S")
+	daty <- format(dates, "%Y%m%d%H%M%S", tz = "Africa/Kigali")
 	if(!file.exists(fileinfo)){
 		info <- list(start = daty[1], end = daty[length(daty)])
 		info$vars <- names(outdata)

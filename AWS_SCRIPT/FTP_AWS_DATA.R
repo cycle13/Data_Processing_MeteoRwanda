@@ -72,10 +72,11 @@ source(file.path(AWS_SCRIPT_DIR, "getAWS_10minto1hour.R"))
 source(file.path(AWS_SCRIPT_DIR, "getAWS_1hourto1day.R"))
 source(file.path(AWS_SCRIPT_DIR, "getAWS_1dayto10days.R"))
 auth <- readRDS(file.path(AWS_DATA_DIR, "coordinates_files", "ftpserver.mto"))
+# auth <- readRDS(file.path(AWS_DATA_DIR, "coordinates_files", "ftpserver.loc"))
 
 ############################################
-# 
-ret1hr <- lapply(c("REMA", "LSI"), function(AWS){
+#
+ret1hr <- lapply(c("LSI", "REMA"), function(AWS){
 	cat(paste("Process", AWS, "data ......"), '\n')
 	curl <- getCurlHandle(userpwd = auth$AWS[[AWS]]$userpwd, ftp.use.epsv = FALSE, dirlistonly = TRUE)
 	listAWS <- try(getURL(auth$AWS[[AWS]]$ftp, curl = curl), silent = TRUE)
