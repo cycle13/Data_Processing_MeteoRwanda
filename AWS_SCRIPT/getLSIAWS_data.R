@@ -378,8 +378,10 @@ getLSIAWS.write10minData <- function(aws, OUTDIR, ftpserver){
 	if(is.null(data10min)){
 		return("try.again")
 	}else{
-		if(!is.list(data10min)) if(data10min == "NoValid") return("abort")
-		if(!is.list(data10min)) if(data10min == "Uptodate") return("no.update")
+		if(!is.list(data10min))
+			if(data10min == "NoValid") return("abort")
+		if(!is.list(data10min))
+			if(data10min == "Uptodate") return("no.update")
 	}
 	data10min <- getLSIAWS.10minData(aws, data10min, OUTDIR)
 	if(is.null(data10min)) return("try.again")

@@ -1,6 +1,6 @@
 
 getREMAAWS.STN <- function(aws, OUTDIR, ftp){
-	cat(aws, '\n')
+	cat(paste("Processing :", aws), '\n')
 	tmpdir <- file.path(OUTDIR, "tmp")
 	if(!dir.exists(tmpdir)) dir.create(tmpdir, showWarnings = FALSE, recursive = TRUE)
 	tmpfile <- file.path(tmpdir, paste0("gateway_data_", aws, ".txt"))
@@ -8,11 +8,21 @@ getREMAAWS.STN <- function(aws, OUTDIR, ftp){
 	file0 <- paste0(ftp$AWS$REMA$ftp, paste0("gateway_data_", aws, ".txt"))
 	ret <- try(getFTPData(file0, tmpfile, userpwd = ftp$AWS$REMA$userpwd), silent = TRUE)
 
-	if(inherits(ret, "try-error")) return(NULL)
-	if(ret != 0) return(NULL)
+	if(inherits(ret, "try-error")){
+		cat(paste(aws, ": Unable to get >", paste0("gateway_data_", aws, ".txt"), "< from the FTP server\n"))
+		return('no')
+	}
+	if(ret != 0){
+		cat(paste(aws, ": Unable to get >", paste0("gateway_data_", aws, ".txt"), "< from the FTP server\n"))
+		return('no')
+	}
 
 	don <- try(read.table(tmpfile, colClasses = 'character', stringsAsFactors = FALSE), silent = TRUE)
-	if(inherits(don, "try-error")) return(NULL)
+	if(inherits(don, "try-error")){
+		cat(paste(aws, ": Unable to read >", paste0("gateway_data_", aws, ".txt"), "\n"))
+		return(NULL)
+	}
+
 	return(don)
 }
 
@@ -166,10 +176,16 @@ getREMAAWS.SimpleQC <- function(data10min){
 
 getREMAAWS.write10minData <- function(aws, OUTDIR, ftpserver){
 	data10min <- getREMAAWS.STN(aws, OUTDIR, ftpserver)
-	if(is.null(data10min)) return("try.again")
+	if(is.null(data10min)){
+		return("abort")
+	}else{
+		if(!is.data.frame(data10min))
+			if(data10min == 'no') return("try.again")
+	}
 	data10min <- getREMAAWS.10minData(aws, data10min, OUTDIR)
 	if(is.null(data10min)) return("try.again")
-	if(!is.list(data10min)) if(data10min == "no.update") return("no.update")
+	if(!is.list(data10min))
+		if(data10min == "no.update") return("no.update")
 
 	REMA_DIR <- file.path(OUTDIR, "REMA_AWS", "compressed_data", "data_10min")
 	if(!dir.exists(REMA_DIR)) dir.create(REMA_DIR, showWarnings = FALSE, recursive = TRUE)
