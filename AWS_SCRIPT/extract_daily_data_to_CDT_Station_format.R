@@ -1,6 +1,6 @@
 
 ### Path to the folder AWS_DATA
-AWS_DATA_DIR <- "/Users/rijaf/Desktop/ECHANGE/github/Data_Processing_MeteoRwanda/AWS_DATA"
+AWS_DATA_DIR <- "~/Desktop/ECHANGE/github/Data_Processing_MeteoRwanda/AWS_DATA"
 
 ##############
 ## variable to extract

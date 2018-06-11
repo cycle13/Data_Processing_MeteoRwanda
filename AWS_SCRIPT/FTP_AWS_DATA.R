@@ -1,8 +1,8 @@
 
 ### Path to the folder AWS_DATA
-AWS_DATA_DIR <- "/Users/rijaf/Desktop/ECHANGE/github/Data_Processing/AWS_DATA"
+AWS_DATA_DIR <- "~/Desktop/ECHANGE/github/Data_Processing_MeteoRwanda/AWS_DATA"
 ### Path to the folder AWS_SCRIPT
-AWS_SCRIPT_DIR <- "/Users/rijaf/Desktop/ECHANGE/github/Data_Processing/AWS_SCRIPT"
+AWS_SCRIPT_DIR <- "~/Desktop/ECHANGE/github/Data_Processing_MeteoRwanda/AWS_SCRIPT"
 
 ########################################## End Edit #############################################
 

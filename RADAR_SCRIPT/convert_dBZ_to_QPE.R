@@ -8,10 +8,10 @@ dir.radar.mdv <- "/Volumes/SeagateBackup/20180112_radar_data/FIDEL/radarcart/ops
 
 #############
 ## Path to the folder RADAR_SCRIPT
-radar_script_dir <- "/Users/rijaf/Desktop/Data_Processing/RADAR_SCRIPT"
+radar_script_dir <- "~/Desktop/ECHANGE/github/Data_Processing_MeteoRwanda/RADAR_SCRIPT"
 
 ## Path to the folder RADAR_DATA
-radar_data_dir <- "/Users/rijaf/Desktop/Data_Processing/RADAR_DATA"
+radar_data_dir <- "~/Desktop/ECHANGE/github/Data_Processing_MeteoRwanda/RADAR_DATA"
 
 ##############
 ## Start date (GMT time) to process in the format "YYYYMMDD:HH"

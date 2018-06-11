@@ -1,12 +1,12 @@
 
 ### Path to the folder RADAR_SCRIPT
-radar_script_dir <- "/Users/rijaf/Desktop/ECHANGE/github/Data_Processing/RADAR_SCRIPT"
+radar_script_dir <- "~/Desktop/ECHANGE/github/Data_Processing_MeteoRwanda/RADAR_SCRIPT"
 
 ### Path to the folder RADAR_DATA
-radar_data_dir <- "/Users/rijaf/Desktop/ECHANGE/github/Data_Processing/RADAR_DATA"
+radar_data_dir <- "~/Desktop/ECHANGE/github/Data_Processing_MeteoRwanda/RADAR_DATA"
 
 ### Path to the folder AWS_DATA
-aws_data_dir <- "/Users/rijaf/Desktop/ECHANGE/github/Data_Processing/AWS_DATA"
+aws_data_dir <- "~/Desktop/ECHANGE/github/Data_Processing_MeteoRwanda/AWS_DATA"
 
 ##############
 ### Method to be used to adjust the QPE

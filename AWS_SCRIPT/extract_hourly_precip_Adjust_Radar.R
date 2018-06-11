@@ -1,6 +1,6 @@
 
 ### Path to the folder AWS_DATA
-AWS_DATA_DIR <- "/Users/rijaf/Desktop/Data_Processing/AWS_DATA"
+AWS_DATA_DIR <- "~/Desktop/ECHANGE/github/Data_Processing_MeteoRwanda/AWS_DATA"
 
 ##############
 ## Start date (local time) to extract in the format "YYYY-MM-DD HH:MM:SS"
