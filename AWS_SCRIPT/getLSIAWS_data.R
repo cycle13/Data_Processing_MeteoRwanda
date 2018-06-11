@@ -1,10 +1,16 @@
 
 getLSIAWS.STN <- function(aws, OUTDIR, ftp){
+	cat(paste("Processing :", aws), '\n')
 	tmpdir <- file.path(OUTDIR, "tmp")
 	if(!dir.exists(tmpdir)) dir.create(tmpdir, showWarnings = FALSE, recursive = TRUE)
 	curl <- getCurlHandle(userpwd = ftp$AWS$LSI$userpwd, ftp.use.epsv = FALSE, dirlistonly = TRUE)
-	listFile <- getURL(paste0(ftp$AWS$LSI$ftp, aws, "/"), curl = curl)
+	listFile <- try(getURL(paste0(ftp$AWS$LSI$ftp, aws, "/"), curl = curl), silent = TRUE)
 	rm(curl); gc()
+	if(inherits(listFile, "try-error")){
+		cat("Unable to connect to server\n")
+		return(NULL)
+	}
+
 	listFile <- unlist(strsplit(listFile, "\r?\n"))
 
 	iold <- grep("Data[[:digit:]]+.Elab.txt", listFile)
@@ -22,7 +28,7 @@ getLSIAWS.STN <- function(aws, OUTDIR, ftp){
 		length(listF3) == 0 & length(listF4) == 0 & length(listF5) == 0)
 	{
 		cat(paste(aws, ": No valid filename format found\n"))
-		return(NULL)
+		return("NoValid")
 	}
 
 	wdaty1 <- if(length(listF1) == 0) NULL else
@@ -47,7 +53,7 @@ getLSIAWS.STN <- function(aws, OUTDIR, ftp){
 	if(length(listFile) == 0)
 	{
 		cat(paste(aws, ": No valid filename format found\n"))
-		return(NULL)
+		return("NoValid")
 	}
 
 	oo <- order(wdaty)
@@ -59,6 +65,10 @@ getLSIAWS.STN <- function(aws, OUTDIR, ftp){
 		info <- readRDS(fileinfo)
 		last <- strptime(info$end, "%Y%m%d%H%M%S", tz = "Africa/Kigali")
 		ilast <- which(wdaty >= last)
+		if(length(ilast) == 0){
+			cat(paste(aws, ": Data up to date\n"))
+			return("Uptodate")
+		}
 		ilast <- if(ilast[1] == 1) ilast else c(ilast[1]-1, ilast)
 		listFile <- listFile[ilast]
 	}
@@ -72,11 +82,11 @@ getLSIAWS.STN <- function(aws, OUTDIR, ftp){
 
 		if(inherits(ret, "try-error")){
 			cat(paste(aws, ": Unable to get >", ff, "< from the FTP server\n"))
-			return(NULL)
+			return("no")
 		}
 		if(ret != 0){
 			cat(paste(aws, ": Unable to get >", ff, "< from the FTP server\n"))
-			return(NULL)
+			return("no")
 		}
 		don <- try(readLines(tmpfile), silent = TRUE)
 		if(inherits(don, "try-error")){
@@ -91,6 +101,10 @@ getLSIAWS.STN <- function(aws, OUTDIR, ftp){
 		don <- don[-(1:3)]
 		don <- str_trim(don)
 		don <- don[don != ""]
+		if(length(don) == 0){
+			cat(paste(aws, ": No data inside >", ff, "\n"))
+			return(NULL)
+		}
 		don <- try(do.call(rbind, lapply(seq_along(don), function(i) unlist(strsplit(don[i], "\t")))), silent = TRUE)
 		if(inherits(don, "try-error")){
 			cat(paste(aws, ": Unable to parse data >", ff, "\n"))
@@ -113,13 +127,19 @@ getLSIAWS.STN <- function(aws, OUTDIR, ftp){
 		list(head = xhead, data = don, date = daty)
 	})
 
-	# donne0 <- donne
 	inull <- sapply(donne, is.null)
 	donne <- donne[!inull]
 	if(length(donne) == 0){
 		cat(paste(aws, ": All files are considered invalid\n"))
+		return("NoValid")
+	}
+
+	ino <- sapply(donne, function(x) if(!is.list(x)) x == "no" else FALSE)
+	if(any(ino)){
+		cat(paste(aws, ": Unable to download some files\n"))
 		return(NULL)
 	}
+
 	xhead <- donne[[1]]$head
 	daty <- do.call(c, lapply(donne, '[[', 'date'))
 	donne <- do.call(rbind, lapply(donne, '[[', 'data'))
@@ -355,7 +375,12 @@ getLSIAWS.SimpleQC <- function(data10min, ValidDataPerc.min = 50){
 
 getLSIAWS.write10minData <- function(aws, OUTDIR, ftpserver){
 	data10min <- getLSIAWS.STN(aws, OUTDIR, ftpserver)
-	if(is.null(data10min)) return("try.again")
+	if(is.null(data10min)){
+		return("try.again")
+	}else{
+		if(!is.list(data10min)) if(data10min == "NoValid") return("abort")
+		if(!is.list(data10min)) if(data10min == "Uptodate") return("no.update")
+	}
 	data10min <- getLSIAWS.10minData(aws, data10min, OUTDIR)
 	if(is.null(data10min)) return("try.again")
 	if(is.list(data10min)){
